@@ -12,6 +12,7 @@ API key if Tenant Management or the customer's provider is unavailable.
 from __future__ import annotations
 
 import asyncio
+import os
 import re
 import secrets
 from urllib.parse import urlsplit
@@ -90,7 +91,7 @@ class ChargeXTenantExtension(TenantExtension):
         self._service = _ChargeXService(config)
         # The existing Control Plane may manage ONLY the legacy public/test
         # schema. A platform admin key never authorizes a customer schema.
-        self._admin_api_key = config.get("admin_api_key") or ""
+        self._admin_api_key = config.get("admin_api_key") or os.getenv("HINDSIGHT_CP_DATAPLANE_API_KEY") or ""
         if self._admin_api_key and len(self._admin_api_key) < 24:
             raise ValueError("Invalid Hindsight admin API key")
         self._created: set[str] = set()
