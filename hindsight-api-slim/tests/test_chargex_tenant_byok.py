@@ -35,6 +35,9 @@ class StubContext:
     async def run_migration(self, schema):
         self.schemas.append(schema)
 
+    def get_memory_engine(self):
+        return type("TestMemoryEngine", (), {"_initialized": False})()
+
 
 def test_reject_untrusted_memory_schemas():
     assert _valid_schema("mem_t000001") == "mem_t000001"
