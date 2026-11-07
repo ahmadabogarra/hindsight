@@ -12,6 +12,7 @@ API key if Tenant Management or the customer's provider is unavailable.
 from __future__ import annotations
 
 import asyncio
+import secrets
 import re
 from urllib.parse import urlsplit
 
@@ -87,6 +88,11 @@ class ChargeXTenantExtension(TenantExtension):
     def __init__(self, config: dict[str, str]):
         super().__init__(config)
         self._service = _ChargeXService(config)
+        # The existing Control Plane may manage ONLY the legacy public/test
+        # schema. A platform admin key never authorizes a customer schema.
+        self._admin_api_key = config.get("admin_api_key") or ""
+        if self._admin_api_key and len(self._admin_api_key) < 24:
+            raise ValueError("Invalid Hindsight admin API key")
         self._created: set[str] = set()
         self._locks: dict[str, asyncio.Lock] = {}
 
@@ -105,6 +111,8 @@ class ChargeXTenantExtension(TenantExtension):
     async def authenticate(self, context: RequestContext) -> TenantContext:
         if not context.api_key:
             raise AuthenticationError("Missing ChargeX tenant credential")
+        if self._admin_api_key and secrets.compare_digest(context.api_key, self._admin_api_key):
+            return TenantContext(schema_name="public")
         try:
             data = await self._service.request(
                 "POST", "/api/internal/hindsight/validate", {"token": context.api_key}
@@ -137,6 +145,8 @@ class ChargeXTenantExtension(TenantExtension):
             # returned schemas itself. The API lazily migrates newcomers when
             # their first authenticated request arrives.
             tenants.append(Tenant(schema=schema, tenant_id=tenant_id))
+        if self._admin_api_key:
+            tenants.append(Tenant(schema="public"))
         return tenants
 
 
