@@ -513,7 +513,7 @@ class LocalSTEmbeddings(Embeddings):
                 encode = self._model.encode_document
             else:
                 encode = self._model.encode
-            kwargs = {"convert_to_numpy": True, "show_progress_bar": False}
+            kwargs: dict[str, Any] = {"convert_to_numpy": True, "show_progress_bar": False}
             if input_type == "query" and self.query_prompt:
                 # SentenceTransformers prompts are applied to queries only.
                 # Documents stay unprefixed, as instructed by multilingual retrieval models.
