@@ -132,7 +132,10 @@ class ChargeXTenantExtension(TenantExtension):
             schema = _valid_schema(item.get("schema"))
             if schema != "mem_" + tenant_id.lower():
                 raise RuntimeError("ChargeX tenant/schema mismatch")
-            await self._ensure_schema(schema)
+            # Do not invoke migrations here: startup calls list_tenants()
+            # before the engine connection pool exists and migrates the
+            # returned schemas itself. The API lazily migrates newcomers when
+            # their first authenticated request arrives.
             tenants.append(Tenant(schema=schema, tenant_id=tenant_id))
         return tenants
 
