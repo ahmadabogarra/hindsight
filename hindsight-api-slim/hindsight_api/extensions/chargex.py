@@ -12,8 +12,8 @@ API key if Tenant Management or the customer's provider is unavailable.
 from __future__ import annotations
 
 import asyncio
-import secrets
 import re
+import secrets
 from urllib.parse import urlsplit
 
 import aiohttp
@@ -61,7 +61,7 @@ class _ChargeXService:
         private = parsed.hostname is not None and parsed.hostname.endswith(".railway.internal")
         if (parsed.scheme != "http" or not (private or local) or
                 parsed.username or parsed.password or parsed.query or parsed.fragment or
-                not key or len(key) < 24):
+                not key or len(key) < 32):
             raise ValueError("ChargeX internal service URL or authentication is not configured securely")
         self.url = url
         self.key = key
