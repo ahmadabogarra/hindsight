@@ -77,4 +77,4 @@ def eval_one(name,model_id,query_prompt):
 eval_one("bge-small-en-v1.5","BAAI/bge-small-en-v1.5",None)
 eval_one("harrier-oss-v1-270m","microsoft/harrier-oss-v1-270m","Instruct: Retrieve the relevant company policy or operational fact for the question\nQuery: ")
 
-eval_one("harrier-oss-v1-0.6b","microsoft/harrier-oss-v1-0.6b","Instruct: Retrieve the relevant company policy or operational fact for the question\\nQuery: ")
+eval_one("harrier-oss-v1-0.6b","microsoft/harrier-oss-v1-0.6b","Instruct: Retrieve the relevant company policy or operational fact for the question\nQuery: ")
