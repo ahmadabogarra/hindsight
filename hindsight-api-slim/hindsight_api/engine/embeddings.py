@@ -346,6 +346,7 @@ class LocalSTEmbeddings(Embeddings):
         force_cpu: bool = False,
         trust_remote_code: bool = False,
         max_concurrent: int = DEFAULT_EMBEDDINGS_LOCAL_MAX_CONCURRENT,
+        query_prompt: str = "",
     ):
         """
         Initialize local SentenceTransformers embeddings.
@@ -365,6 +366,7 @@ class LocalSTEmbeddings(Embeddings):
         self.max_concurrent = max(1, max_concurrent)
         self.force_cpu = force_cpu
         self.trust_remote_code = trust_remote_code
+        self.query_prompt = query_prompt
         self._model = None
         self._dimension: int | None = None
         self._device_type: str = "cpu"
@@ -511,7 +513,12 @@ class LocalSTEmbeddings(Embeddings):
                 encode = self._model.encode_document
             else:
                 encode = self._model.encode
-            embeddings = encode(texts, convert_to_numpy=True, show_progress_bar=False)
+            kwargs = {"convert_to_numpy": True, "show_progress_bar": False}
+            if input_type == "query" and self.query_prompt:
+                # SentenceTransformers prompts are applied to queries only.
+                # Documents stay unprefixed, as instructed by multilingual retrieval models.
+                kwargs["prompt"] = self.query_prompt
+            embeddings = encode(texts, **kwargs)
             return [emb.tolist() for emb in embeddings]
         finally:
             # Only reclaim the GPU allocator pool here, and only when actually on a
@@ -2616,6 +2623,7 @@ def _create_embeddings(config: "ConfigLike") -> Embeddings:
             force_cpu=config.embeddings_local_force_cpu,
             trust_remote_code=config.embeddings_local_trust_remote_code,
             max_concurrent=config.embeddings_local_max_concurrent,
+            query_prompt=query_prefix,
         )
     elif provider == "onnx":
         return OnnxEmbeddings(
