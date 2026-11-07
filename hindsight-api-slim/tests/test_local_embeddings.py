@@ -108,3 +108,23 @@ async def test_local_embeddings_run_on_a_fixed_pool_and_keep_the_callers_context
     assert len(threads) <= 2
     assert all(name.startswith("local-embeddings") for name in threads)
     assert seen_banks == {f"bank-{i}" for i in range(20)}
+
+
+async def test_local_embeddings_apply_custom_query_prompt_only_to_queries():
+    model = MagicMock()
+    model.encode_query.return_value = np.array([[2.0]])
+    model.encode_document.return_value = np.array([[3.0]])
+
+    instruction = "Instruct: Retrieve the relevant company policy or operational fact for the question\\nQuery: "
+    embeddings = LocalSTEmbeddings(query_prompt=instruction)
+    embeddings._model = model
+
+    assert await embeddings.encode_query(["كيف ندفع المورد؟"]) == [[2.0]]
+    assert await embeddings.encode_documents(["Supplier payments are in cash"]) == [[3.0]]
+
+    model.encode_query.assert_called_once_with(
+        ["كيف ندفع المورد؟"], convert_to_numpy=True, show_progress_bar=False, prompt=instruction
+    )
+    model.encode_document.assert_called_once_with(
+        ["Supplier payments are in cash"], convert_to_numpy=True, show_progress_bar=False
+    )
