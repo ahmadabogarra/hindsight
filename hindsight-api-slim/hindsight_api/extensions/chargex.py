@@ -145,6 +145,14 @@ class ChargeXTenantExtension(TenantExtension):
             # returned schemas itself. The API lazily migrates newcomers when
             # their first authenticated request arrives.
             tenants.append(Tenant(schema=schema, tenant_id=tenant_id))
+        # Startup's schema migration phase runs before the connection pool is
+        # initialized, so it consumes the list without extension-side DDL.
+        # Once running, the worker's periodic discovery provisions new tenants
+        # idempotently, including tenants that have not sent a first request.
+        memory = self.context.get_memory_engine()
+        if getattr(memory, "_initialized", False):
+            for tenant in tenants:
+                await self._ensure_schema(tenant.schema)
         if self._admin_api_key:
             tenants.append(Tenant(schema="public"))
         return tenants
